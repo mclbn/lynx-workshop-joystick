@@ -14,4 +14,4 @@ TODO / WIP:
 - [X] Keyboard emulation
 - [ ] Joystick emulation
 - [ ] Mouse emulation
-- [ ] Add assembly pictures (showing diodes and my poor soldering skills)
+- [X] Add assembly pictures (showing diodes and my poor soldering skills)
