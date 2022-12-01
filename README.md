@@ -12,6 +12,6 @@ The 3 buttons under the pinky finger are dedicated to switching modes. One click
 
 TODO / WIP:
 - [X] Keyboard emulation
-- [ ] Joystick emulation
+- [X] Joystick emulation
 - [ ] Mouse emulation
 - [X] Add assembly pictures (showing diodes and my poor soldering skills)
