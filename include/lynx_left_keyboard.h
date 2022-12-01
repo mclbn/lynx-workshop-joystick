@@ -3,36 +3,49 @@
 
 #include <Keyboard.h>
 #include "lynx_left_constants.h"
+#include "lynx_left_custom_types.h"
 #include "lynx_left_activity.h"
 
+#define JOY_VERYLOW (100)
+#define JOY_LOW (400)
+#define JOY_HIGH (600)
+#define JOY_VERYHIGH (900)
+
 typedef enum {
-	DEFAULT_LAYOUT,
-	ALTERNATIVE_LAYOUT,
-	CYBERPUNK_LAYOUT,
-	PREY_LAYOUT,
-	STARSECTOR_LAYOUT,
-	MAX_LAYOUT
+  JOY_STATE_OFF,
+  JOY_STATE_LOW,
+  JOY_STATE_HIGH
+} joy_state;
+
+typedef enum {
+	DEFAULT_KEYBOARD_LAYOUT,
+	ALTERNATIVE_KEYBOARD_LAYOUT,
+	CYBERPUNK_KEYBOARD_LAYOUT,
+	PREY_KEYBOARD_LAYOUT,
+	STARSECTOR_KEYBOARD_LAYOUT,
+	MAX_KEYBOARD_LAYOUT
 } keypad_layout;
 
-
-#ifdef JOYSTICK_LAYOUT_H
-
-typedef int keypad_array[ROW_NB][COLUMN_NB];
+typedef struct s_keyboard_joystick_layout {
+  int up_value;
+  int down_value;
+  int left_value;
+  int right_value;
+  int low_mod_value;
+  int high_mod_value;
+} keyboard_joystick_layout;
 
 typedef struct s_keyboard_set {
   keypad_layout id;
   const keypad_array * keypad;
-  const joystick_layout * joystick;
+  const keyboard_joystick_layout * joystick;
 } keyboard_set;
-
-#endif
 
 void setup_keyboard_mode(void);
 void end_keyboard_mode(void);
 void keyboard_mode_change(void);
 void keyboard_press_key(struct s_key_item key);
 void keyboard_release_key(struct s_key_item key);
-void keyboard_press_joykey(int value);
-void keyboard_release_joykey(int value);
+void keyboard_joystick_update(joystick_axis axis, int value);
 
 #endif // LYNX_LEFT_KEYBOARD_H_

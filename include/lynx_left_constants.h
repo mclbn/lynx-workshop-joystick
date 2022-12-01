@@ -8,6 +8,8 @@
 #define VRX_PIN A1                      //joystick set up
 #define VRY_PIN A0
 
+#define NO_KEY '\0'
+
 extern int input_pins[COLUMN_NB];
 extern int output_pins[ROW_NB];
 

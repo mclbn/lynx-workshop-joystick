@@ -1,24 +1,11 @@
 #include "lynx_left_activity.h"
 
-input_mode current_mode = KEYBOARD_MODE;
+static input_mode current_mode = KEYBOARD_MODE;
 
-unsigned long time_counter = 0;
-bool activity = false;
+static unsigned long time_counter = 0;
 
-int x_axis = 0;
-int y_axis = 0;
-
-bool up_changed = false;
-bool down_changed = false;
-bool left_changed = false;
-bool right_changed = false;
-bool low_mod_active = false;
-bool high_mod_active = false;
-
-joy_state up_axis = JOY_STATE_OFF;
-joy_state down_axis = JOY_STATE_OFF;
-joy_state left_axis = JOY_STATE_OFF;
-joy_state right_axis = JOY_STATE_OFF;
+static int last_x_axis = -1;
+static int last_y_axis = -1;
 
 button_layout keypad[ROW_NB][COLUMN_NB] = {
   {
@@ -54,11 +41,9 @@ button_layout keypad[ROW_NB][COLUMN_NB] = {
     {NO_CODE, "NULL", NO_KEY, false} // Unused
   }};
 
-joystick_layout joystick = {NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY};
+static key_item key_list[MAX_KEYS];
 
-key_item key_list[MAX_KEYS];
-
-activity_actions actions = {
+static activity_actions actions = {
   NULL, NULL, NULL, NULL
 };
 
@@ -71,13 +56,11 @@ setup_activity(void) {
 void
 setup_actions(void (*press_button)(key_item),
               void (*release_button)(key_item),
-              void (*press_joystick)(int),
-              void (*release_joystick)(int),
+              void (*joystick_update)(joystick_axis, int),
               void (*mode_change)(void)) {
   actions.press_button = press_button;
   actions.release_button = release_button;
-  actions.press_joystick = press_joystick;
-  actions.release_joystick = release_joystick;
+  actions.joystick_update = joystick_update;
   actions.mode_change = mode_change;
 }
 
@@ -199,72 +182,6 @@ get_keys(void) {
   return activity;
 }
 
-static inline bool
-at_least_one_axis_high(void) {
-  return (up_axis == JOY_STATE_HIGH || down_axis == JOY_STATE_HIGH ||
-          left_axis == JOY_STATE_HIGH || right_axis == JOY_STATE_HIGH);
-}
-
-static inline bool
-at_least_one_axis_low(void) {
-  return (up_axis == JOY_STATE_LOW || down_axis == JOY_STATE_LOW ||
-          left_axis == JOY_STATE_LOW || right_axis == JOY_STATE_LOW);
-}
-
-static inline bool
-at_least_one_axis_not_high(void) {
-  return (!(up_axis == JOY_STATE_HIGH && down_axis == JOY_STATE_HIGH &&
-            left_axis == JOY_STATE_HIGH && right_axis == JOY_STATE_HIGH));
-}
-
-static inline bool
-all_axis_down(void) {
-  return (up_axis == JOY_STATE_OFF && down_axis == JOY_STATE_OFF &&
-          left_axis == JOY_STATE_OFF && right_axis == JOY_STATE_OFF);
-}
-
-static inline bool
-apply_low_mod(void) {
-  return (at_least_one_axis_low() &&
-          (up_axis <= JOY_STATE_LOW && down_axis <= JOY_STATE_LOW &&
-           left_axis <= JOY_STATE_LOW && right_axis <= JOY_STATE_LOW));
-}
-
-static inline bool
-apply_high_mod(void) {
-  return (at_least_one_axis_high() &&
-          (up_axis != JOY_STATE_LOW && down_axis != JOY_STATE_LOW &&
-           left_axis != JOY_STATE_LOW && right_axis != JOY_STATE_LOW));
-}
-
-static void
-switch_mode(input_mode new_mode) {
-  switch (current_mode) {
-  case (KEYBOARD_MODE):
-    end_keyboard_mode();
-    break;
-  case (JOYSTICK_MODE):
-    break;
-  case (MOUSE_MODE):
-    break;
-  default:
-    break;
-  }
-
-  switch (new_mode) {
-  case (KEYBOARD_MODE):
-    setup_keyboard_mode();
-    break;
-  case (JOYSTICK_MODE):
-    break;
-  case (MOUSE_MODE):
-    break;
-  default:
-    break;
-  }
-  current_mode = new_mode;
-}
-
 static void
 handle_mode_change(int key_code) {
   switch (key_code) {
@@ -366,111 +283,16 @@ handle_activity(void) {
     }
   }
 
-  x_axis = analogRead(VRX_PIN);
-  y_axis = analogRead(VRY_PIN);
+  int x_axis = analogRead(VRX_PIN);
+  int y_axis = analogRead(VRY_PIN);
 
-  if (x_axis < JOY_VERYLOW) {
-    left_changed = ((left_axis == JOY_STATE_OFF) ? true : false);
-    left_axis = JOY_STATE_HIGH;
-  } else if (x_axis <= JOY_LOW) {
-    left_changed = ((left_axis == JOY_STATE_OFF) ? true : false);
-    left_axis = JOY_STATE_LOW;
-  } else {
-    left_changed = ((left_axis != JOY_STATE_OFF) ? true : false);
-    left_axis = JOY_STATE_OFF;
+  if (x_axis != last_x_axis) {
+    actions.joystick_update(JOY_AXIS_X, x_axis);
+    last_x_axis = x_axis;
   }
 
-  if (x_axis > JOY_VERYHIGH) {
-    right_changed = ((right_axis == JOY_STATE_OFF) ? true : false);
-    right_axis = JOY_STATE_HIGH;
-  } else if (x_axis >= JOY_HIGH) {
-    right_changed = ((right_axis == JOY_STATE_OFF) ? true : false);
-    right_axis = JOY_STATE_LOW;
-  } else {
-    right_changed = ((right_axis != JOY_STATE_OFF) ? true : false);
-    right_axis = JOY_STATE_OFF;
-  }
-
-  if (y_axis < JOY_VERYLOW) {
-    up_changed = ((up_axis == JOY_STATE_OFF) ? true : false);
-    up_axis = JOY_STATE_HIGH;
-  } else if (y_axis <= JOY_LOW) {
-    up_changed = ((up_axis == JOY_STATE_OFF) ? true : false);
-    up_axis = JOY_STATE_LOW;
-  } else {
-    up_changed = ((up_axis != JOY_STATE_OFF) ? true : false);
-    up_axis = JOY_STATE_OFF;
-  }
-
-  if (y_axis > JOY_VERYHIGH) {
-    down_changed = ((down_axis == JOY_STATE_OFF) ? true : false);
-    down_axis = JOY_STATE_HIGH;
-  } else if (y_axis >= JOY_HIGH) {
-    down_changed = ((down_axis == JOY_STATE_OFF) ? true : false);
-    down_axis = JOY_STATE_LOW;
-  } else {
-    down_changed = ((down_axis != JOY_STATE_OFF) ? true : false);
-    down_axis = JOY_STATE_OFF;
-  }
-
-  if (low_mod_active == false && apply_low_mod() == true) {
-    actions.press_joystick(joystick.low_mod_value);
-    Serial.println("Low modifier press");
-    low_mod_active = true;
-  } else if (low_mod_active == true &&
-             (all_axis_down() == true || at_least_one_axis_high() == true)) {
-    actions.release_joystick(joystick.low_mod_value);
-    Serial.println("Low modifier release");
-    low_mod_active = false;
-  }
-
-  if (high_mod_active == false && apply_high_mod() == true) {
-    actions.press_joystick(joystick.high_mod_value);
-    Serial.println("High modifier press");
-    high_mod_active = true;
-  } else if (high_mod_active == true && at_least_one_axis_low()) {
-    actions.release_joystick(joystick.high_mod_value);
-    Serial.println("High modifier release");
-    high_mod_active = false;
-  }
-
-  if (left_changed == true) {
-    if (left_axis >= JOY_STATE_LOW) {
-      actions.press_joystick(joystick.left_value);
-      Serial.println("Left press");
-    } else {
-      actions.release_joystick(joystick.left_value);
-      Serial.println("Left release");
-    }
-  }
-
-  if (right_changed == true) {
-    if (right_axis >= JOY_STATE_LOW) {
-      actions.press_joystick(joystick.right_value);
-      Serial.println("Right press");
-    } else {
-      actions.release_joystick(joystick.right_value);
-      Serial.println("Right release");
-    }
-  }
-
-  if (up_changed == true) {
-    if (up_axis >= JOY_STATE_LOW) {
-      actions.press_joystick(joystick.up_value);
-      Serial.println("Up press");
-    } else {
-      actions.release_joystick(joystick.up_value);
-      Serial.println("Up release");
-    }
-  }
-
-  if (down_changed == true) {
-    if (down_axis >= JOY_STATE_LOW) {
-      actions.press_joystick(joystick.down_value);
-      Serial.println("Down press");
-    } else {
-      actions.release_joystick(joystick.down_value);
-      Serial.println("Down release");
-    }
+  if (y_axis != last_y_axis) {
+    actions.joystick_update(JOY_AXIS_Y, y_axis);
+    last_y_axis = y_axis;
   }
 }
