@@ -21,8 +21,9 @@ typedef struct s_joystick_set {
 void setup_joystick_mode(void);
 void end_joystick_mode(void);
 void joystick_mode_change(void);
-void joystick_press_key(struct s_key_item key);
-void joystick_release_key(struct s_key_item key);
-void joystick_joystick_update(joystick_axis axis, int value);
+void joystick_press_key(struct s_key_item);
+void joystick_release_key(struct s_key_item);
+void joystick_joystick_update(joystick_axis , int);
+void joystick_joystick_update_both(int , int);
 
 #endif // LYNX_LEFT_JOYSTICK_H

@@ -45,13 +45,14 @@ setup_joystick_mode(void) {
   joystick_controller.setYAxisRange(0, 1023);
   update_layout(current_layout);
   setup_actions(&joystick_press_key, &joystick_release_key,
-                &joystick_joystick_update, &joystick_mode_change);
+                &joystick_joystick_update, &joystick_joystick_update_both,
+                &joystick_mode_change);
 }
 
 void
 end_joystick_mode(void) {
   joystick_controller.end();
-  setup_actions(NULL, NULL, NULL, NULL);
+  setup_actions(NULL, NULL, NULL, NULL, NULL);
 }
 
 static joystick_layout
@@ -85,23 +86,21 @@ void joystick_release_key(key_item key) {
 
 void
 joystick_joystick_update(joystick_axis axis, int value) {
-  switch (axis) {
-  case JOY_AXIS_X: {
+  if (axis == JOY_AXIS_X) {
     Serial.print("X: ");
     Serial.print(value);
     Serial.println("");
     joystick_controller.setXAxis(value);
-    break;
-  }
-  case JOY_AXIS_Y: {
+  } else if (axis == JOY_AXIS_Y) {
     Serial.print("Y: ");
     Serial.print(value);
     Serial.println("");
     joystick_controller.setYAxis(value);
-    break;
-  }
-  default:
-    break;
   }
   joystick_controller.sendState();
+}
+
+void joystick_joystick_update_both(int x_value, int y_value) {
+  joystick_joystick_update(JOY_AXIS_X, x_value);
+  joystick_joystick_update(JOY_AXIS_Y, y_value);
 }

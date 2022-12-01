@@ -2,7 +2,8 @@
 
 static input_mode current_mode = KEYBOARD_MODE;
 
-static unsigned long time_counter = 0;
+static unsigned long debounce_counter = 0;
+static unsigned long response_counter = 0;
 
 static int last_x_axis = -1;
 static int last_y_axis = -1;
@@ -49,7 +50,8 @@ static activity_actions actions = {
 
 void
 setup_activity(void) {
-  time_counter = 0;
+  debounce_counter = 0;
+  response_counter = 0;
   memset(key_list, 0, sizeof(key_list));
 }
 
@@ -57,10 +59,12 @@ void
 setup_actions(void (*press_button)(key_item),
               void (*release_button)(key_item),
               void (*joystick_update)(joystick_axis, int),
+              void (*joystick_update_both)(int, int),
               void (*mode_change)(void)) {
   actions.press_button = press_button;
   actions.release_button = release_button;
   actions.joystick_update = joystick_update;
+  actions.joystick_update_both = joystick_update_both;
   actions.mode_change = mode_change;
 }
 
@@ -165,7 +169,7 @@ static bool
 get_keys(void) {
   bool activity = false;
 
-  if ((millis() - time_counter) > DEBOUNCE_DELAY) {
+  if ((millis() - debounce_counter) > DEBOUNCE_DELAY) {
     for (uint8_t output_pin = 0; output_pin < ROW_NB; output_pin++) {
       digitalWrite(output_pins[output_pin], LOW);
       for (uint8_t input_pin = 0; input_pin < COLUMN_NB; input_pin++) {
@@ -177,7 +181,7 @@ get_keys(void) {
       digitalWrite(output_pins[output_pin], HIGH);
     }
     activity = update_buffer();
-    time_counter = millis();
+    debounce_counter = millis();
   }
   return activity;
 }
@@ -261,9 +265,9 @@ handle_mode_change(int key_code) {
 
 void
 handle_activity(void) {
-  bool activity = get_keys();
+  bool key_activity = get_keys();
 
-  if (activity) {
+  if (key_activity) {
     for (uint8_t i = 0; i < MAX_KEYS; i++) {
       if (key_list[i].state == PRESSED || key_list[i].state == HELD) {
         if (key_list[i].code == 13 // Keyboard mode
@@ -283,16 +287,26 @@ handle_activity(void) {
     }
   }
 
-  int x_axis = analogRead(VRX_PIN);
-  int y_axis = analogRead(VRY_PIN);
+  if ((millis() - response_counter) > RESPONSE_DELAY) {
+    int x_axis = analogRead(VRX_PIN);
+    int y_axis = analogRead(VRY_PIN);
 
-  if (x_axis != last_x_axis) {
-    actions.joystick_update(JOY_AXIS_X, x_axis);
-    last_x_axis = x_axis;
-  }
+    if (current_mode == MOUSE_MODE
+        || ((x_axis != last_x_axis) && (y_axis != last_y_axis))) {
+      actions.joystick_update_both(x_axis, y_axis);
+      last_x_axis = x_axis;
+      last_y_axis = y_axis;
+    } else {
+      if (x_axis != last_x_axis) {
+        actions.joystick_update(JOY_AXIS_X, x_axis);
+        last_x_axis = x_axis;
+      }
 
-  if (y_axis != last_y_axis) {
-    actions.joystick_update(JOY_AXIS_Y, y_axis);
-    last_y_axis = y_axis;
+      if (y_axis != last_y_axis) {
+        actions.joystick_update(JOY_AXIS_Y, y_axis);
+        last_y_axis = y_axis;
+      }
+    }
+    response_counter = millis();
   }
 }

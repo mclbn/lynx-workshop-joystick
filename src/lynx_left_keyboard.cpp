@@ -106,13 +106,14 @@ setup_keyboard_mode(void) {
   Keyboard.begin();
   update_layout(current_layout);
   setup_actions(&keyboard_press_key, &keyboard_release_key,
-                &keyboard_joystick_update, &keyboard_mode_change);
+                &keyboard_joystick_update, &keyboard_joystick_update_both,
+                &keyboard_mode_change);
 }
 
 void
 end_keyboard_mode(void) {
   Keyboard.end();
-  setup_actions(NULL, NULL, NULL, NULL);
+  setup_actions(NULL, NULL, NULL, NULL, NULL);
 }
 
 static keypad_layout
@@ -307,4 +308,10 @@ keyboard_joystick_update(joystick_axis axis, int value) {
     }
   }
 
+}
+
+void
+keyboard_joystick_update_both(int x_value, int y_value) {
+  keyboard_joystick_update(JOY_AXIS_X, x_value);
+  keyboard_joystick_update(JOY_AXIS_Y, y_value);
 }

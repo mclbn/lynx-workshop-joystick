@@ -13,5 +13,6 @@ The 3 buttons under the pinky finger are dedicated to switching modes. One click
 TODO / WIP:
 - [X] Keyboard emulation
 - [X] Joystick emulation
-- [ ] Mouse emulation
+- [X] Mouse emulation
 - [X] Add assembly pictures (showing diodes and my poor soldering skills)
+- [ ] Implement scroll wheel using joystick (and modifier key) and maybe prev/next buttons

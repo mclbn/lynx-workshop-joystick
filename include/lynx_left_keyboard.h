@@ -44,8 +44,9 @@ typedef struct s_keyboard_set {
 void setup_keyboard_mode(void);
 void end_keyboard_mode(void);
 void keyboard_mode_change(void);
-void keyboard_press_key(struct s_key_item key);
-void keyboard_release_key(struct s_key_item key);
-void keyboard_joystick_update(joystick_axis axis, int value);
+void keyboard_press_key(struct s_key_item);
+void keyboard_release_key(struct s_key_item);
+void keyboard_joystick_update(joystick_axis, int);
+void keyboard_joystick_update_both(int, int);
 
 #endif // LYNX_LEFT_KEYBOARD_H_

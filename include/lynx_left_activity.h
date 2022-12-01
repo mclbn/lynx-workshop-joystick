@@ -9,6 +9,7 @@
 #include "lynx_left_mouse.h"
 
 #define DEBOUNCE_DELAY (25)
+#define RESPONSE_DELAY (5)
 #define MAX_KEYS (10)
 #define HOLD_TIME (500)
 
@@ -45,7 +46,8 @@ typedef struct s_button_layout {
 typedef struct s_activity_actions {
   void (*press_button)(key_item);
   void (*release_button)(key_item);
-  void (*joystick_update)(joystick_axis axis, int value);
+  void (*joystick_update)(joystick_axis, int);
+  void (*joystick_update_both)(int, int);
   void (*mode_change)(void);
 } activity_actions;
 
@@ -54,6 +56,7 @@ void handle_activity(void);
 void setup_actions(void (*press_button)(key_item),
                    void (*release_button)(key_item),
                    void (*joystick_update)(joystick_axis, int),
+                   void (*joystick_update_both)(int, int),
                    void (*mode_change)(void));
 
 extern button_layout keypad[ROW_NB][COLUMN_NB];
