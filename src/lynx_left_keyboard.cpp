@@ -61,10 +61,10 @@ static const keyboard_joystick_layout prey_joystick = {
 };
 
 static const int starsector_keypad[ROW_NB][COLUMN_NB] = {
-  {NO_KEY, KEY_LEFT_SHIFT, '5', '1', 'v', 'f', NO_KEY},
-  {NO_KEY, KEY_LEFT_CTRL, '6', '2', NO_KEY, ' ', NO_KEY},
-  {NO_KEY, KEY_RETURN, '7', '3', NO_KEY, NO_KEY, NO_KEY},
-  {NO_KEY, KEY_TAB, '8', '4', '9', '0', NO_KEY}
+  {NO_KEY, 'f', '5', '1', ' ', KEY_TAB, NO_KEY},
+  {NO_KEY, 'v', '6', '2', NO_KEY, 'c', NO_KEY},
+  {NO_KEY, 'r', '7', '3', NO_KEY, NO_KEY, NO_KEY},
+  {NO_KEY, 't', '8', '4', KEY_LEFT_SHIFT, KEY_LEFT_CTRL, NO_KEY}
 };
 
 static const keyboard_joystick_layout starsector_joystick = {
