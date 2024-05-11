@@ -12,6 +12,9 @@ static joy_state down_axis = JOY_STATE_OFF;
 static joy_state left_axis = JOY_STATE_OFF;
 static joy_state right_axis = JOY_STATE_OFF;
 
+static int low_threshold = JOY_LOW;
+static int high_threshold = JOY_HIGH;
+
 static keyboard_joystick_layout joystick = {
   NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY, NO_KEY
 };
@@ -37,6 +40,16 @@ static const int alternative_keypad[ROW_NB][COLUMN_NB] = {
 
 static const keyboard_joystick_layout alternative_joystick = {
   'w', 's', 'a', 'd', KEY_LEFT_SHIFT, NO_KEY};
+
+static const int fallout_keypad[ROW_NB][COLUMN_NB] = {
+  {NO_KEY, KEY_LEFT_SHIFT, '5', '1', 'e', KEY_TAB, NO_KEY},
+  {NO_KEY, ' ', '6', '2', NO_KEY, 'j', NO_KEY},
+  {NO_KEY, KEY_LEFT_CTRL, '7', '3', NO_KEY, NO_KEY, NO_KEY},
+  {NO_KEY, 'z', '8', '4', 'r', 'v', NO_KEY}
+};
+
+static const keyboard_joystick_layout fallout_joystick = {
+  'w', 's', 'a', 'd', NO_KEY, NO_KEY};
 
 static const int cyberpunk_keypad[ROW_NB][COLUMN_NB] = {
   {NO_KEY, KEY_LEFT_SHIFT, 'q', '1', 'f', KEY_ESC, NO_KEY},
@@ -76,6 +89,7 @@ static keypad_layout current_layout = DEFAULT_KEYBOARD_LAYOUT;
 static const keyboard_set key_sets[MAX_KEYBOARD_LAYOUT] = {
   {DEFAULT_KEYBOARD_LAYOUT, &default_keypad, &default_joystick},
   {ALTERNATIVE_KEYBOARD_LAYOUT, &alternative_keypad, &alternative_joystick},
+  {FALLOUT_KEYBOARD_LAYOUT, &fallout_keypad, &fallout_joystick},
   {CYBERPUNK_KEYBOARD_LAYOUT, &cyberpunk_keypad, &cyberpunk_joystick},
   {PREY_KEYBOARD_LAYOUT, &prey_keypad, &prey_joystick},
   {STARSECTOR_KEYBOARD_LAYOUT, &starsector_keypad, &starsector_joystick}
@@ -97,6 +111,15 @@ update_layout(keypad_layout layout) {
       joystick.low_mod_value = key_sets[it].joystick->low_mod_value;
       joystick.high_mod_value = key_sets[it].joystick->high_mod_value;
     }
+  if ((joystick.low_mod_value == NO_KEY) && (joystick.high_mod_value == NO_KEY)) {
+    low_threshold = JOY_VERYLOW;
+    high_threshold = JOY_VERYHIGH;
+    Serial.println("No modifiers mode");
+  } else {
+    low_threshold = JOY_LOW;
+    high_threshold = JOY_HIGH;
+    Serial.println("Modifiers mode");
+  }
   current_layout = layout;
 }
 
@@ -203,7 +226,7 @@ keyboard_joystick_update(joystick_axis axis, int value) {
     if (value < JOY_VERYLOW) {
       left_changed = ((left_axis == JOY_STATE_OFF) ? true : false);
       left_axis = JOY_STATE_HIGH;
-    } else if (value <= JOY_LOW) {
+    } else if (value <= low_threshold) {
       left_changed = ((left_axis == JOY_STATE_OFF) ? true : false);
       left_axis = JOY_STATE_LOW;
     } else {
@@ -213,7 +236,7 @@ keyboard_joystick_update(joystick_axis axis, int value) {
     if (value > JOY_VERYHIGH) {
       right_changed = ((right_axis == JOY_STATE_OFF) ? true : false);
       right_axis = JOY_STATE_HIGH;
-    } else if (value >= JOY_HIGH) {
+    } else if (value >= high_threshold) {
       right_changed = ((right_axis == JOY_STATE_OFF) ? true : false);
       right_axis = JOY_STATE_LOW;
     } else {
@@ -224,7 +247,7 @@ keyboard_joystick_update(joystick_axis axis, int value) {
     if (value < JOY_VERYLOW) {
       up_changed = ((up_axis == JOY_STATE_OFF) ? true : false);
       up_axis = JOY_STATE_HIGH;
-    } else if (value <= JOY_LOW) {
+    } else if (value <= low_threshold) {
       up_changed = ((up_axis == JOY_STATE_OFF) ? true : false);
       up_axis = JOY_STATE_LOW;
     } else {
@@ -234,7 +257,7 @@ keyboard_joystick_update(joystick_axis axis, int value) {
     if (value > JOY_VERYHIGH) {
       down_changed = ((down_axis == JOY_STATE_OFF) ? true : false);
       down_axis = JOY_STATE_HIGH;
-    } else if (value >= JOY_HIGH) {
+    } else if (value >= high_threshold) {
       down_changed = ((down_axis == JOY_STATE_OFF) ? true : false);
       down_axis = JOY_STATE_LOW;
     } else {
